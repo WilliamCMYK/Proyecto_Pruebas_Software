@@ -1,0 +1,254 @@
+JScript
+
+  <script>
+        // Variables globales
+        let currentUser = null;
+        let products = [
+            { id: 1, name: 'Smartphone Pro', price: 699.99, emoji: '📱', likes: 0, liked: false },
+            { id: 2, name: 'Laptop Gaming', price: 1299.99, emoji: '💻', likes: 0, liked: false },
+            { id: 3, name: 'Auriculares Bluetooth', price: 199.99, emoji: '🎧', likes: 0, liked: false },
+            { id: 4, name: 'Tablet Premium', price: 499.99, emoji: '📱', likes: 0, liked: false },
+            { id: 5, name: 'Smartwatch', price: 299.99, emoji: '⌚', likes: 0, liked: false },
+            { id: 6, name: 'Cámara Digital', price: 899.99, emoji: '📷', likes: 0, liked: false }
+        ];
+        let cart = [];
+        let userStats = {
+            purchases: 0,
+            likes: 0
+        };
+
+        // Función para mostrar secciones
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionName).classList.add('active');
+
+            // Actualizar botones activos
+            document.querySelectorAll('.nav-buttons .btn').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            document.getElementById(sectionName + '-btn').classList.remove('btn-secondary');
+            document.getElementById(sectionName + '-btn').classList.add('btn-primary');
+        }
+
+        // Función para mostrar alertas
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                alert.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(alert);
+                }, 300);
+            }, 3000);
+        }
+
+        // Registro de usuario
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const userData = {
+                username: formData.get('username'),
+                email: formData.get('email'),
+                country: formData.get('country')
+            };
+
+            currentUser = userData;
+            
+            // Actualizar contador de usuarios
+            const totalUsers = document.getElementById('total-users');
+            totalUsers.textContent = parseInt(totalUsers.textContent) + 1;
+
+            showAlert(`¡Bienvenido ${userData.username}! Tu registro ha sido exitoso.`, 'success');
+            
+            // Actualizar perfil
+            updateUserProfile();
+            
+            // Limpiar formulario
+            e.target.reset();
+            
+            // Ir a la sección de perfil
+            setTimeout(() => {
+                showSection('profile');
+            }, 1500);
+        });
+
+        // Actualizar perfil de usuario
+        function updateUserProfile() {
+            if (currentUser) {
+                document.getElementById('user-info').innerHTML = `
+                    <div class="cart-item">
+                        <div>
+                            <h3>${currentUser.username}</h3>
+                            <p>Email: ${currentUser.email}</p>
+                            <p>País: ${currentUser.country}</p>
+                        </div>
+                        <div style="font-size: 2em;">👤</div>
+                    </div>
+                `;
+                document.getElementById('user-stats').style.display = 'grid';
+            }
+        }
+
+        // Generar productos
+        function generateProducts() {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = '';
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <div class="product-price">$${product.price}</div>
+                        <div class="product-actions">
+                            <button class="like-btn ${product.liked ? 'liked' : ''}" onclick="toggleLike(${product.id})" id="like-btn-${product.id}">
+                                ❤️ ${product.likes} Me gusta
+                            </button>
+                            <button class="btn btn-primary" onclick="addToCart(${product.id})" id="add-cart-${product.id}">
+                                Agregar al Carrito
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(productCard);
+            });
+        }
+
+        // Toggle like
+        function toggleLike(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                if (!product.liked) {
+                    product.likes++;
+                    product.liked = true;
+                    userStats.likes++;
+                    showAlert(`¡Te gusta ${product.name}!`, 'info');
+                } else {
+                    product.likes--;
+                    product.liked = false;
+                    userStats.likes--;
+                    showAlert(`Ya no te gusta ${product.name}`, 'warning');
+                }
+                
+                // Actualizar botón
+                const likeBtn = document.getElementById(`like-btn-${productId}`);
+                likeBtn.innerHTML = `❤️ ${product.likes} Me gusta`;
+                likeBtn.classList.toggle('liked', product.liked);
+                
+                // Actualizar estadísticas
+                document.getElementById('total-likes').textContent = products.reduce((sum, p) => sum + p.likes, 0);
+                document.getElementById('user-likes').textContent = userStats.likes;
+            }
+        }
+
+        // Agregar al carrito
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                const existingItem = cart.find(item => item.id === productId);
+                
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
+                
+                updateCartDisplay();
+                showAlert(`${product.name} agregado al carrito`, 'success');
+            }
+        }
+
+        // Actualizar display del carrito
+        function updateCartDisplay() {
+            const cartCount = document.getElementById('cart-count');
+            const cartItems = document.getElementById('cart-items');
+            const cartTotal = document.getElementById('cart-total');
+            
+            cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p style="text-align: center; color: #666;">Tu carrito está vacío</p>';
+                cartTotal.textContent = '0.00';
+            } else {
+                cartItems.innerHTML = cart.map(item => `
+                    <div class="cart-item">
+                        <div>
+                            <strong>${item.name}</strong>
+                            <p>Cantidad: ${item.quantity} | Precio: $${item.price}</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="removeFromCart(${item.id})" style="padding: 5px 10px;">
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                cartTotal.textContent = total.toFixed(2);
+            }
+        }
+
+        // Eliminar del carrito
+        function removeFromCart(productId) {
+            const index = cart.findIndex(item => item.id === productId);
+            if (index > -1) {
+                const item = cart[index];
+                showAlert(`${item.name} eliminado del carrito`, 'warning');
+                cart.splice(index, 1);
+                updateCartDisplay();
+            }
+        }
+
+        // Checkout
+        function checkout() {
+            if (cart.length === 0) {
+                showAlert('Tu carrito está vacío', 'warning');
+                return;
+            }
+            
+            if (!currentUser) {
+                showAlert('Debes registrarte primero para realizar una compra', 'warning');
+                showSection('register');
+                return;
+            }
+            
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            userStats.purchases++;
+            
+            showAlert(`¡Compra realizada exitosamente! Total: $${total.toFixed(2)}`, 'success');
+            
+            // Limpiar carrito
+            cart = [];
+            updateCartDisplay();
+            
+            // Actualizar estadísticas de usuario
+            document.getElementById('user-purchases').textContent = userStats.purchases;
+        }
+
+        // Inicializar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            generateProducts();
+            updateCartDisplay();
+            
+            // Mostrar alerta de bienvenida
+            setTimeout(() => {
+                showAlert('¡Bienvenido a TechMarket! Explora nuestros productos.', 'info');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
