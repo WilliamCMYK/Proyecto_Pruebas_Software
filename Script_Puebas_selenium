@@ -1,0 +1,94 @@
+Pruebas automaticas con selenium:
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+
+# Configuración del navegador
+options = webdriver.ChromeOptions()
+options.add_argument("--start-maximized")
+# options.add_argument("--headless")  # Opcional: ejecutar en modo sin cabeza
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+try:
+    # 1. Abrir la página local 
+    driver.get("file:///C:/Users/William/Documents/ProyectoFinalPuebasDeSoftware/PROYECTO.html")  
+
+    # 2. Esperar que la página cargue completamente
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.TAG_NAME, 'body'))
+    )
+    print("Página cargada correctamente.")
+    time.sleep(5)
+
+    # 3. Navegar a la sección Registro
+    register_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//button[contains(text(), "Registro")]'))
+    )
+    register_button.click()
+    print("Navegado a la sección de Registro.")
+    time.sleep(5)
+
+    # 4. Rellenar formulario de registro
+    username = driver.find_element(By.ID, "username")
+    email = driver.find_element(By.ID, "email")
+    password = driver.find_element(By.ID, "password")
+    country = driver.find_element(By.ID, "country")
+
+    username.send_keys("testuser")
+    email.send_keys("test@example.com")
+    password.send_keys("securepassword123")
+    country.send_keys("España")
+
+    register_form = driver.find_element(By.TAG_NAME, "form")
+    register_form.submit()
+    print("Formulario de registro enviado.")
+    time.sleep(5)
+
+    # 5. Navegar a la sección Productos
+    products_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//button[contains(text(), "Productos")]'))
+    )
+    products_button.click()
+    print("Navegado a la sección de Productos.")
+    time.sleep(5)
+
+    # 6. Agregar un producto al carrito
+    add_to_cart_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//button[contains(text(), "Agregar al Carrito")]'))
+    )
+    add_to_cart_button.click()
+    print("Producto agregado al carrito.")
+    time.sleep(5)
+
+    # 7. Navegar a la sección Carrito
+    cart_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//button[contains(text(), "Carrito")]'))
+    )
+    cart_button.click()
+    print("Navegado a la sección del Carrito.")
+    time.sleep(5)
+
+    # 8. Realizar compra
+    checkout_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.ID, "checkout-btn"))
+    )
+    checkout_button.click()
+    print("Compra realizada exitosamente.")
+    time.sleep(5)
+
+    # 9. Verificar alerta de éxito
+    success_alert = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, "alert-success"))
+    )
+    assert "Compra realizada exitosamente!" in success_alert.text
+    print("Prueba completada con éxito.")
+
+finally:
+    # Cerrar el navegador
+    driver.quit()
+    print("Navegador cerrado.")
